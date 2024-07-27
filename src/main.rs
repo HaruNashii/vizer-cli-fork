@@ -1,15 +1,15 @@
-use std::{process::exit, sync::OnceLock};
+use std::sync::OnceLock;
+use clap::{arg, Arg, Command};
 
 use crate::{
-    cli::get_medias::get_medias,
+    quit::quit,
     fs::temp_dir::{create_temp_dir, remove_temp_dir},
+    media::{get_medias, choose_media},
+    fs::posters::get_posters_path,
+    language::{get_translation, Translations},
+    player::watch_media::watch_media,
+    scraper::is_offline::is_offline,
 };
-use clap::{arg, Arg, Command};
-use cli::choose_media::choose_media;
-use fs::posters::get_posters_path;
-use language::{get_translation, Translations};
-use player::watch_media::watch_media;
-use scraper::is_offline::is_offline;
 
 mod cli;
 mod driver;
@@ -20,14 +20,20 @@ pub mod media;
 mod player;
 mod scraper;
 pub mod season;
+pub mod quit;
 
+
+
+// VARIABLES SETUP
 static TRANSLATION: OnceLock<Translations> = OnceLock::new();
 static VIM_MODE: OnceLock<bool> = OnceLock::new();
 static USE_MPV: OnceLock<bool> = OnceLock::new();
 static USE_GECKODRIVER: OnceLock<bool> = OnceLock::new();
 
+
 #[tokio::main]
 async fn main() {
+    // FLAGS SETUP
     let matches = Command::new("vizer-cli")
         .about("CLI tool to watch movies/series/animes in portuguese")
         .version(env!("CARGO_PKG_VERSION"))
@@ -87,6 +93,8 @@ async fn main() {
         )
         .get_matches();
 
+
+    // FLAGS ACTIONS SETUP
     if matches.get_flag("vim") {
         VIM_MODE.get_or_init(|| true);
     } else {
@@ -116,14 +124,21 @@ async fn main() {
         USE_MPV.get_or_init(|| false);
     }
 
+
     let language = TRANSLATION.get().unwrap();
 
+    
+    // OFFLINE CHECK
     if is_offline().await {
-        eprintln!("{}", language.is_currently_offline);
-        exit(1)
+        quit(None, None, Some(language.is_currently_offline)).await;
     }
 
+
+    // FLAG SUBCOMMAND ACTION SETUP
     match matches.subcommand() {
+
+
+        // MEDIA SETUP
         Some(("search", sub_matches)) => {
             let media_name = sub_matches
                 .get_many::<String>("SEARCH")
@@ -133,19 +148,17 @@ async fn main() {
 
             if media_name.len() < 4 {
                 // because the site only allows us to search more than 3 characters
-                eprintln!("{}", language.media_name_len_exit_text);
-                exit(1)
+                quit(None, None, Some(language.media_name_len_exit_text)).await;
             }
 
             let medias = get_medias(&media_name).await;
-
             if medias.is_empty() {
-                eprintln!("{}", language.media_name_is_empty_exit_text);
-                exit(1)
+                quit(None, None, Some(language.media_name_is_empty_exit_text)).await;
             }
 
-            let mut posters_path: Vec<String> = Vec::new();
 
+            // IMAGE PREVIEW SETUP
+            let mut posters_path: Vec<String> = Vec::new();
             if img_mode {
                 create_temp_dir();
                 let medias_poster_url: Vec<String> = medias
@@ -156,17 +169,20 @@ async fn main() {
 
                 posters_path = get_posters_path(medias_poster_url).await.unwrap();
             }
+
+
+            // CHOOSE MEDIA SETUP
             match choose_media(medias, img_mode, posters_path) {
                 Ok(media) => {
                     watch_media(media, img_mode).await.unwrap();
                     remove_temp_dir();
                 }
-                Err(err) => {
-                    eprintln!("{:?}", err);
-
-                    remove_temp_dir();
+                Err(_) => {
+                    quit(None, None, None).await;
                 }
             }
+
+
         }
         _ => println!("{}", language.no_choice_misc_text),
     }

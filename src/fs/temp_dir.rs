@@ -20,5 +20,7 @@ pub fn remove_temp_dir() {
 
     let temp_dir = env::temp_dir();
     let vizer_temp = format!("{}/vizer", temp_dir.display());
-    remove_dir_all(vizer_temp).expect(language.remove_temp_dir_expect);
+    if Path::new(&vizer_temp).exists() {
+        remove_dir_all(vizer_temp).expect(language.remove_temp_dir_expect);
+    }
 }

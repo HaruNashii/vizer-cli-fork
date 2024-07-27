@@ -1,6 +1,7 @@
 use selthi::Select;
-
 use crate::{TRANSLATION, VIM_MODE};
+
+
 
 pub fn choose_lang(langs: Vec<String>) -> Result<String, ()> {
     let language = TRANSLATION.get().unwrap();

@@ -1,4 +1,2 @@
-pub mod mpv;
-pub mod play_video;
-pub mod vlc;
+pub mod media_player;
 pub mod watch_media;
