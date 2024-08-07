@@ -1,4 +1,5 @@
-pub struct Translations {
+pub struct Translations 
+{
     //=====# main.rs translations #=====//
     //exit text
     pub media_name_len_exit_text: &'static str,
@@ -80,7 +81,10 @@ pub struct Translations {
     pub menu_msg_of: &'static str,
 }
 
-const PORTUGUESE: Translations = Translations {
+
+
+const PORTUGUESE: Translations = Translations 
+{
     //=====# main.rs translations #=====//
     //exit text
     media_name_len_exit_text: "Desculpe, sua pesquisa precisa ter no mínimo 4 caracteres",
@@ -162,7 +166,10 @@ const PORTUGUESE: Translations = Translations {
     menu_msg_of: "de",
 };
 
-const ENGLISH: Translations = Translations {
+
+
+const ENGLISH: Translations = Translations
+{
     //=====# main.rs translations #=====//
     //exit text
     media_name_len_exit_text: "Sorry, your query needs to be at least 4 characters",
@@ -245,10 +252,16 @@ const ENGLISH: Translations = Translations {
     menu_msg_of: "of",
 };
 
-pub fn get_translation(flag: &str) -> Translations {
-    if flag == "english" {
+
+
+pub fn get_translation(flag: &str) -> Translations 
+{
+    if flag == "english" 
+    {
         ENGLISH
-    } else {
+    }
+    else 
+    {
         PORTUGUESE
     }
 }

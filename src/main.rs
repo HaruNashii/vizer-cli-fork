@@ -1,177 +1,189 @@
-use std::{process::exit, sync::OnceLock};
+use std::sync::OnceLock;
+use fantoccini::Locator;
 
-use crate::{
-    cli::get_medias::get_medias,
-    fs::temp_dir::{create_temp_dir, remove_temp_dir},
+use crate::back_end::
+{
+    play_video::play_video,
+    is_offline::is_offline,
+    get_medias::get_medias,
+    get_video_url::get_url,
+    start_driver::{get_driver, start_browser_driver},
+    click_element::click_element,
+    season::parse_seasons,
+    episode::parse_episodes,
 };
-use clap::{arg, Arg, Command};
-use cli::choose_media::choose_media;
-use fs::posters::get_posters_path;
-use language::{get_translation, Translations};
-use player::watch_media::watch_media;
-use scraper::is_offline::is_offline;
+    
+use crate::full_stack::
+{
+    sdl_events::{search, quit, choose},
+    language::{get_translation, Translations},
+};
 
-mod cli;
-mod driver;
-pub mod episode;
-mod fs;
-pub mod language;
-pub mod media;
-mod player;
-mod scraper;
-pub mod season;
+use crate::front_end::window::{create_window, render_scene};
+
+
+
+mod back_end;
+mod front_end;
+mod full_stack;
+
+
 
 static TRANSLATION: OnceLock<Translations> = OnceLock::new();
-static VIM_MODE: OnceLock<bool> = OnceLock::new();
 static USE_MPV: OnceLock<bool> = OnceLock::new();
 static USE_GECKODRIVER: OnceLock<bool> = OnceLock::new();
 
+
+
+
+
 #[tokio::main]
-async fn main() {
-    let matches = Command::new("vizer-cli")
-        .about("A cli tool to watch movies, series and animes in Portuguese")
-        .version(env!("CARGO_PKG_VERSION"))
-        .subcommand_required(true)
-        .arg_required_else_help(true)
-        .arg(
-            Arg::new("english")
-                .short('e')
-                .long("english")
-                .required(false)
-                .num_args(0)
-                .help("Change all the texts in the app to english")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("mpv")
-                .short('m')
-                .long("mpv")
-                .required(false)
-                .num_args(0)
-                .help("Use MPV media player instead of VLC")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("geckodriver")
-                .short('g')
-                .long("geckodriver")
-                .required(false)
-                .num_args(0)
-                .help("Use geckodriver instead of chromedriver")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("vim")
-                .short('v')
-                .long("vim")
-                .required(false)
-                .num_args(0)
-                .help("VIM Mode for the enthusiast")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("img")
-                .short('i')
-                .long("image-preview")
-                .required(false)
-                .num_args(0)
-                .help("Enable you to see the posters as you choose them")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .subcommand(
-            Command::new("search")
-                .about("Search for your content")
-                .short_flag('s')
-                .arg(arg!(<SEARCH> "The Search for media").num_args(1..))
-                .arg_required_else_help(true),
-        )
-        .get_matches();
-
-    if matches.get_flag("vim") {
-        VIM_MODE.get_or_init(|| true);
-    } else {
-        VIM_MODE.get_or_init(|| false);
-    }
-
-    let mut img_mode = false;
-    if matches.get_flag("img") {
-        img_mode = true;
-    }
-
-    if matches.get_flag("english") {
-        TRANSLATION.get_or_init(|| get_translation("english"));
-    } else {
-        TRANSLATION.get_or_init(|| get_translation("portuguese"));
-    }
-
-    if matches.get_flag("geckodriver") {
-        USE_GECKODRIVER.get_or_init(|| true);
-    } else {
-        USE_GECKODRIVER.get_or_init(|| false);
-    }
-
-    if matches.get_flag("mpv") {
-        USE_MPV.get_or_init(|| true);
-    } else {
-        USE_MPV.get_or_init(|| false);
-    }
-
+async fn main() 
+{
+    //===============================================================================================================//
+    //----------------------------------------------SETUP THE BACK-END-----------------------------------------------//
+    //===============================================================================================================//
+    USE_MPV.get_or_init(|| true);
+    USE_GECKODRIVER.get_or_init(|| true);
+    TRANSLATION.get_or_init(|| get_translation("english"));
     let language = TRANSLATION.get().unwrap();
+    
 
-    if is_offline().await {
-        eprintln!("{}", language.is_currently_offline);
-        exit(1)
+
+    //===============================================================================================================//
+    //---------------------------------------------CHECK IF ITS ONLINE-----------------------------------------------//
+    //===============================================================================================================//
+    if is_offline().await 
+    {
+        panic!("{}", language.is_currently_offline);
     }
 
-    match matches.subcommand() {
-        Some(("search", sub_matches)) => {
-            let media_name = sub_matches
-                .get_many::<String>("SEARCH")
-                .expect("required")
-                .map(|v| v.as_str())
-                .collect::<String>();
 
-            if media_name.len() < 4 {
-                // because the site only allows us to search more than 3 characters
-                eprintln!("{}", language.media_name_len_exit_text);
-                exit(1)
-            }
 
-            let medias = get_medias(&media_name).await;
+    //===============================================================================================================//
+    //------------------------------------------------START FRONT-END------------------------------------------------//
+    //===============================================================================================================//
+    let (mut canvas, _texture_creator, sdl_started) = create_window();
+    let mut event_pump = sdl_started.event_pump().unwrap();
+   
 
-            if medias.is_empty() {
-                eprintln!("{}", language.media_name_is_empty_exit_text);
-                exit(1)
-            }
 
-            let mut posters_path: Vec<String> = Vec::new();
+    //===============================================================================================================//
+    //------------------------------------------------SEARCH FOR MEDIA-----------------------------------------------//
+    //===============================================================================================================//
+    let media_name = search(&mut event_pump);
+    let medias = get_medias(&media_name).await;
+    let media_url = &medias[0].url;
+    if medias.is_empty() 
+    {
+        panic!("{}", language.media_name_is_empty_exit_text); 
+    }
 
-            if img_mode {
-                create_temp_dir();
-                let medias_poster_url: Vec<String> = medias
-                    .clone()
-                    .into_iter()
-                    .map(|media| media.poster_url)
-                    .collect();
 
-                posters_path = get_posters_path(medias_poster_url).await.unwrap();
-            }
-            match choose_media(medias, img_mode, posters_path) {
-                Ok(media) => {
-                    watch_media(media, img_mode).await.unwrap();
-                    if img_mode {
-                        remove_temp_dir();
-                    }
-                }
-                Err(err) => {
-                    eprintln!("{:?}", err);
 
-                    if img_mode {
-                        remove_temp_dir();
-                    }
-                }
-            }
+    //===============================================================================================================//
+    //-----------------------------------------------------SETUP DRIVER----------------------------------------------//
+    //===============================================================================================================//
+    let mut browser_driver = start_browser_driver();
+    let driver = get_driver().await;
+    let url = format!("https://vizer.in/{}", &media_url);
+    driver.goto(&url).await.unwrap();
+                   
+
+
+    if media_url.contains("serie/") 
+    {
+        //===============================================================================================================//
+        //------------------------------------------------SELECT THE SEASON----------------------------------------------//
+        //===============================================================================================================//
+        let seasons = parse_seasons(&driver).await;
+        let season_opts: Vec<&str> = seasons.iter().map(|s| s.text.as_str()).collect();
+        let season_selected = choose(season_opts.len(), &mut event_pump);
+        seasons[season_selected].clone().click_season(&driver, language.click_season_err).await;
+
+        
+           
+        //===============================================================================================================//
+        //------------------------------------------------SELECT THE EPISODE---------------------------------------------//
+        //===============================================================================================================//
+        println!("{}", language.select_episode_misc_text);
+        let episodes = parse_episodes(&driver).await;
+        let episode_opts: Vec<&str> = episodes.iter().map(|s| s.text.as_str()).collect();
+        let episode_selected = choose(episode_opts.len(), &mut event_pump);
+        println!("\n number of episodes = {}, \n episode selected = {} \n", episode_opts.len(), episode_opts[episode_selected].to_string());
+        episodes[episode_selected].clone().click_episode(&driver, language.click_episode_err).await;
+    };
+
+
+     
+    //===============================================================================================================//
+    //------------------------------------------------SELECT THE LANGUAGE--------------------------------------------//
+    //===============================================================================================================//
+    println!("{}", language.getting_language_misc_text);
+    driver.wait().for_element(Locator::Css("div[data-audio]")).await.unwrap();
+
+    let langs_items = driver.find_all(Locator::Css("div[data-audio]")).await.unwrap();
+    let mut langs_opts: Vec<String> = Vec::new();
+    for lang in &langs_items 
+    {
+        let opt = lang.attr("data-audio").await.expect(language.language_option_expect);
+        langs_opts.push(opt.unwrap());
+    }
+
+    let lang_opt = if langs_opts.len() == 2 
+    {
+        let lang_selected = choose(langs_opts.len(), &mut event_pump);
+        println!("\n number of lang = {}, \n media selected = {} \n", langs_opts.len(), langs_opts[lang_selected].to_string());
+        langs_opts[lang_selected].to_string()
+    }
+    else 
+    {
+        langs_opts[0].to_string()
+    };
+
+    for lang in langs_opts 
+    {
+        if lang == lang_opt 
+        {
+            let lang_css_selector = format!("div[data-audio='{}']", lang_opt);
+            driver.find(Locator::Css(&lang_css_selector)).await.unwrap().click().await.unwrap();
+            break;
         }
-        _ => println!("{}", language.no_choice_misc_text),
     }
+    
+    let mixdrop_btn = driver.find(Locator::Css("div[data-load-embed-server='mixdrop']")).await.unwrap();
+    click_element(&driver, mixdrop_btn, language.language_option_expect).await;
+
+
+
+    //===============================================================================================================//
+    //------------------------------------------------PLAY THE VIDEO-------------------------------------------------//
+    //===============================================================================================================//
+    let video_url = get_url(&driver, language).await;
+    play_video(&video_url);
+
+
+
+    //===============================================================================================================//
+    //------------------------------------------------CLOSE THE DRIVER-----------------------------------------------//
+    //===============================================================================================================//
+    driver.close().await.unwrap();
+    browser_driver.kill().unwrap();
+
+
+
+    loop 
+    {
+        //===============================================================================================================//
+        //------------------------------------------------RENDER THE SCENE-----------------------------------------------//
+        //===============================================================================================================//
+        render_scene(&mut canvas);
+        
+
+
+        //===============================================================================================================//
+        //------------------------------------------------HANDLER THE EXIT-----------------------------------------------//
+        //===============================================================================================================//
+        quit(&mut event_pump);
+    };
 }

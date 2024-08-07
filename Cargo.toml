@@ -1,5 +1,5 @@
 [package]
-name = "vizer-cli"
+name = "vizer-gui"
 version = "1.0.0"
 description = "A cli tool to watch movies, series and animes in Portuguese"
 repository = "https://github.com/anotherlusitano/vizer-cli"
@@ -14,9 +14,8 @@ keywords = ["cli", "movies", "series", "anime", "portuguese"]
 [dependencies]
 scraper = "0.17.1"
 reqwest = { version = "0.11", features = ["blocking"] }
-clap = "4.4.4"
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
 futures = "0.3.30"
-selthi = { version = "0.2.7", features = ["with_images"] }
 fantoccini = "0.21.0"
 serde_json = "1.0.120"
+sdl2 = "0.37.0"
