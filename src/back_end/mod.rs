@@ -5,5 +5,4 @@ pub mod episode;
 pub mod media;
 pub mod is_offline;
 pub mod play_video;
-pub mod get_medias;
 pub mod get_video_url;

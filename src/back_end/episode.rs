@@ -1,7 +1,8 @@
 use fantoccini::{elements::Element, Client, Locator};
 
 use crate::back_end::click_element::click_element;
-
+use crate::full_stack::sdl_events::choose;
+use crate::full_stack::language::Translations;
 
 
 #[derive(Clone)]
@@ -59,4 +60,56 @@ pub async fn parse_episodes(driver: &Client) -> Vec<Episode>
 
 
     episodes
+}
+
+
+
+pub async fn select_episode(language: &Translations, driver: &Client, event_pump: &mut sdl2::EventPump) 
+{
+        println!("{}", language.select_episode_misc_text);
+        let episodes = parse_episodes(&driver).await;
+        let episode_opts: Vec<&str> = episodes.iter().map(|s| s.text.as_str()).collect();
+        let episode_selected = choose(episode_opts.len(), event_pump);
+        println!("\n number of episodes = {}, \n episode selected = {} \n", episode_opts.len(), episode_opts[episode_selected].to_string());
+        episodes[episode_selected].clone().click_episode(&driver, language.click_episode_err).await;
+}
+
+
+
+pub async fn select_episode_language(language: &Translations, driver: &Client, event_pump: &mut sdl2::EventPump)
+{
+    println!("{}", language.getting_language_misc_text);
+    driver.wait().for_element(Locator::Css("div[data-audio]")).await.unwrap();
+
+    let langs_items = driver.find_all(Locator::Css("div[data-audio]")).await.unwrap();
+    let mut langs_opts: Vec<String> = Vec::new();
+    for lang in &langs_items 
+    {
+        let opt = lang.attr("data-audio").await.expect(language.language_option_expect);
+        langs_opts.push(opt.unwrap());
+    }
+
+    let lang_opt = if langs_opts.len() == 2 
+    {
+        let lang_selected = choose(langs_opts.len(), event_pump);
+        println!("\n number of lang = {}, \n media selected = {} \n", langs_opts.len(), langs_opts[lang_selected].to_string());
+        langs_opts[lang_selected].to_string()
+    }
+    else 
+    {
+        langs_opts[0].to_string()
+    };
+
+    for lang in langs_opts 
+    {
+        if lang == lang_opt 
+        {
+            let lang_css_selector = format!("div[data-audio='{}']", lang_opt);
+            driver.find(Locator::Css(&lang_css_selector)).await.unwrap().click().await.unwrap();
+            break;
+        }
+    }
+    
+    let mixdrop_btn = driver.find(Locator::Css("div[data-load-embed-server='mixdrop']")).await.unwrap();
+    click_element(&driver, mixdrop_btn, language.language_option_expect).await;
 }

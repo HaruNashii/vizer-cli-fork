@@ -1,4 +1,7 @@
 use crate::back_end::click_element::click_element;
+use crate::full_stack::sdl_events::choose;
+use crate::full_stack::language::Translations;
+
 use fantoccini::{elements::Element, Client, Locator};
 
 
@@ -6,7 +9,7 @@ use fantoccini::{elements::Element, Client, Locator};
 
 
 #[derive(Clone)]
-pub struct Season 
+struct Season 
 {
     pub text: String,
     pub web_element: Element,
@@ -14,7 +17,7 @@ pub struct Season
 
 impl Season 
 {
-    pub async fn click_season(self, driver: &Client, error_message: &str) 
+    async fn click_season(self, driver: &Client, error_message: &str) 
     {
         click_element(driver, self.web_element, error_message).await;
     }
@@ -24,7 +27,7 @@ impl Season
 
 
 
-pub async fn parse_seasons(driver: &Client) -> Vec<Season>
+async fn parse_seasons(driver: &Client) -> Vec<Season>
 {
     let season_css_selector = "div[data-season-id]";
 
@@ -47,3 +50,12 @@ pub async fn parse_seasons(driver: &Client) -> Vec<Season>
     seasons
 }
 
+
+
+pub async fn select_season(language: &Translations, driver: &Client, event_pump: &mut sdl2::EventPump)
+{
+        let seasons = parse_seasons(&driver).await;
+        let season_opts: Vec<&str> = seasons.iter().map(|s| s.text.as_str()).collect();
+        let season_selected = choose(season_opts.len(), event_pump);
+        seasons[season_selected].clone().click_season(&driver, language.click_season_err).await;
+}

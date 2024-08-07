@@ -1,4 +1,5 @@
 use sdl2::pixels::Color;
+use sdl2::EventPump;
 use sdl2::render::{Canvas, TextureCreator};
 use sdl2::video::{Window, WindowContext};
 
@@ -17,7 +18,7 @@ const WINDOW_HEIGHT: u32 = 600;
 
 
 
-pub fn create_window() -> (Canvas<Window>, TextureCreator<WindowContext>, sdl2::Sdl) 
+pub fn create_window() -> (Canvas<Window>, TextureCreator<WindowContext>, EventPump) 
 {
     let sdl_started = sdl2::init().unwrap();
     let video_system = sdl_started.video().unwrap();
@@ -25,8 +26,9 @@ pub fn create_window() -> (Canvas<Window>, TextureCreator<WindowContext>, sdl2::
 
     let canvas = window.into_canvas().accelerated().build().map_err(|e| e.to_string()).unwrap();
     let texture_creator = canvas.texture_creator();
+    let event_pump = sdl_started.event_pump().unwrap();
 
-    (canvas, texture_creator, sdl_started)
+    (canvas, texture_creator, event_pump)
 }
 
 

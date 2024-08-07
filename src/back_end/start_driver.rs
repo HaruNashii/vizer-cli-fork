@@ -10,7 +10,7 @@ use crate::USE_GECKODRIVER;
 
 
 
-pub async fn get_driver() -> Client 
+async fn get_driver() -> Client 
 {
     let use_geckodriver = USE_GECKODRIVER.get().unwrap();
     let driver: Client = if *use_geckodriver 
@@ -45,7 +45,7 @@ pub async fn get_driver() -> Client
 
 
 
-pub fn start_browser_driver() -> Child 
+fn start_browser_driver() -> Child 
 {
     let use_geckodriver = USE_GECKODRIVER.get().unwrap();
     let driver_command = if *use_geckodriver 
@@ -62,4 +62,14 @@ pub fn start_browser_driver() -> Child
     sleep(Duration::from_millis(100));
 
     browser_driver
+}
+
+
+
+pub async fn start_drivers() -> (Client, Child)
+{
+    let client_to_send = get_driver();
+    let child_to_send = start_browser_driver();
+
+    (client_to_send.await, child_to_send)
 }
