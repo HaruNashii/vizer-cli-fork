@@ -64,6 +64,7 @@ pub struct Translations
     //=====# watch_media.rs translations #=====//
     //misc text
     pub preparing_misc_text: &'static str,
+    pub getting_seasons_misc_text: &'static str,
     pub getting_episodes_misc_text: &'static str,
     pub getting_language_misc_text: &'static str,
     pub fetching_misc_text: &'static str,
@@ -149,6 +150,7 @@ const PORTUGUESE: Translations = Translations
     //=====# watch_media.rs translations #=====//
     //misc text
     preparing_misc_text: "Preparando tudo, pode demorar",
+    getting_seasons_misc_text: "Adquirindo Temporadas",
     getting_episodes_misc_text: "Adquirindo episódios",
     getting_language_misc_text: "Adquirindo opções de linguagens",
     fetching_misc_text: "Buscando serviço",
@@ -235,6 +237,7 @@ const ENGLISH: Translations = Translations
     //=====# watch_media.rs translations #=====//
     //misc text
     preparing_misc_text: "Preparing everything, which can take a while",
+    getting_seasons_misc_text: "Getting seasons",
     getting_episodes_misc_text: "Getting episodes",
     getting_language_misc_text: "Getting languages options",
     fetching_misc_text: "Fetching service",

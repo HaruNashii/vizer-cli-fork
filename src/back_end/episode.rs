@@ -1,8 +1,23 @@
 use fantoccini::{elements::Element, Client, Locator};
 
 use crate::back_end::click_element::click_element;
-use crate::full_stack::sdl_events::choose;
-use crate::full_stack::language::Translations;
+
+use crate::full_stack::
+{
+    sdl_events::choose,
+    language::Translations,
+};
+
+use crate::
+{
+    EPISODE_OPTIONS,
+    EPISODE_SELECTED,
+    EPISODE_LANG_OPTIONS,
+    EPISODE_LANG_SELECTED,
+};
+
+
+
 
 
 #[derive(Clone)]
@@ -24,8 +39,9 @@ impl Episode
 
 
 
-pub async fn parse_episodes(driver: &Client) -> Vec<Episode> 
+pub async fn parse_episodes(language: &Translations, driver: &Client) -> Vec<Episode> 
 {
+    println!("{}", language.getting_episodes_misc_text);
 
     let mut episodes = Vec::new();
     let mut list_of_episodes_text = Vec::new();
@@ -67,10 +83,22 @@ pub async fn parse_episodes(driver: &Client) -> Vec<Episode>
 pub async fn select_episode(language: &Translations, driver: &Client, event_pump: &mut sdl2::EventPump) 
 {
         println!("{}", language.select_episode_misc_text);
-        let episodes = parse_episodes(&driver).await;
-        let episode_opts: Vec<&str> = episodes.iter().map(|s| s.text.as_str()).collect();
+        let episodes = parse_episodes(language, &driver).await;
+        let episode_opts: Vec<String> = episodes.iter().map(|s| s.text.to_string()).collect();
+        unsafe 
+        {
+            EPISODE_OPTIONS = episode_opts.clone();
+            println!("\n =========# ALL EPISODES #============== \n {:?} \n =============================== \n", EPISODE_OPTIONS);
+        };
+
+
         let episode_selected = choose(episode_opts.len(), event_pump);
         episodes[episode_selected].clone().click_episode(&driver, language.click_episode_err).await;
+        unsafe 
+        {
+            EPISODE_SELECTED = episode_opts[episode_selected].clone();
+            println!("\n =========# EPISODE SELECTED #============== \n {} \n =============================== \n", EPISODE_SELECTED);
+        };
 }
 
 
@@ -78,6 +106,7 @@ pub async fn select_episode(language: &Translations, driver: &Client, event_pump
 pub async fn select_episode_language(language: &Translations, driver: &Client, event_pump: &mut sdl2::EventPump)
 {
     println!("{}", language.getting_language_misc_text);
+    let mut lang_selected = 0;
     driver.wait().for_element(Locator::Css("div[data-audio]")).await.unwrap();
 
     let langs_items = driver.find_all(Locator::Css("div[data-audio]")).await.unwrap();
@@ -87,21 +116,34 @@ pub async fn select_episode_language(language: &Translations, driver: &Client, e
         let opt = lang.attr("data-audio").await.expect(language.language_option_expect);
         langs_opts.push(opt.unwrap());
     }
+    
+    unsafe 
+    {
+        EPISODE_LANG_OPTIONS = langs_opts.clone();
+        println!("\n =========# ALL LANGUAGES OPTIONS #============== \n {:?} \n =============================== \n", EPISODE_LANG_OPTIONS);
+    };
+
 
     let lang_opt = if langs_opts.len() == 2 
     {
-        let lang_selected = choose(langs_opts.len(), event_pump);
-        println!("\n number of lang = {}, \n media selected = {} \n", langs_opts.len(), langs_opts[lang_selected].to_string());
+        println!("{}", language.select_lang_misc_text);
+        lang_selected = choose(langs_opts.len(), event_pump);
         langs_opts[lang_selected].to_string()
     }
     else 
     {
-        langs_opts[0].to_string()
+        langs_opts[lang_selected].to_string()
+    };
+    
+    unsafe 
+    {
+        EPISODE_LANG_SELECTED.push_str(&langs_opts[lang_selected]);
+        println!("\n =========# SELECTED LANGUAGE OPTION #============== \n {} \n =============================== \n", EPISODE_LANG_SELECTED);
     };
 
-    for lang in langs_opts 
+    for lang in &langs_opts 
     {
-        if lang == lang_opt 
+        if *lang == lang_opt 
         {
             let lang_css_selector = format!("div[data-audio='{}']", lang_opt);
             driver.find(Locator::Css(&lang_css_selector)).await.unwrap().click().await.unwrap();
@@ -111,4 +153,6 @@ pub async fn select_episode_language(language: &Translations, driver: &Client, e
     
     let mixdrop_btn = driver.find(Locator::Css("div[data-load-embed-server='mixdrop']")).await.unwrap();
     click_element(&driver, mixdrop_btn, language.language_option_expect).await;
+    
+
 }

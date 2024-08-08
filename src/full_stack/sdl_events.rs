@@ -2,11 +2,11 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::process::exit;
 
-
-
-
-
-pub static mut INPUT_TEXT: String = String::new();
+use crate::
+{
+    INPUT_TEXT,
+    SELECTED_OPTION,
+};
 
 
 
@@ -64,14 +64,22 @@ pub fn search(event_pump: &mut sdl2::EventPump) -> String
 
 
 
-pub fn choose(amount_limit: usize, event_pump: &mut sdl2::EventPump) -> usize 
+pub fn choose(mut amount_limit: usize, event_pump: &mut sdl2::EventPump) -> usize 
 {
+    if !amount_limit >= 1
+    {
+        amount_limit -= 1;
+    };
     let mut selected: usize = 0;
+    unsafe 
+    { 
+        SELECTED_OPTION = 1;
+        println!("\n =========# SELECT OPTION #============== \n {} \n =============================== \n", SELECTED_OPTION);
+    };
  
-
     loop 
     {
-        println!("\n ========================== \n amount of choices = {},\n ========================== \n  selected = {} \n ========================== \n", amount_limit, selected + 1);
+        //println!("\n ========================== \n amount of choices = {},\n ========================== \n  selected = {} \n ========================== \n", amount_limit, selected + 1);
      
 
         for event in event_pump.poll_iter() 
@@ -80,9 +88,14 @@ pub fn choose(amount_limit: usize, event_pump: &mut sdl2::EventPump) -> usize
             {
                 Event::KeyDown { keycode: Some(Keycode::Down), .. } => 
                 {
-                    if selected + 1 <= amount_limit
+                    if selected < amount_limit
                     {
                         selected += 1;
+                        unsafe 
+                        {
+                            SELECTED_OPTION += 1;
+                            println!("\n =========# SELECT OPTION #============== \n {} \n =============================== \n", SELECTED_OPTION);
+                        };
                     }
                 }
 
@@ -92,6 +105,11 @@ pub fn choose(amount_limit: usize, event_pump: &mut sdl2::EventPump) -> usize
                     if selected >= 1
                     {
                         selected -= 1;
+                        unsafe 
+                        {
+                            SELECTED_OPTION -= 1;
+                            println!("\n =========# SELECT OPTION #============== \n {} \n =============================== \n", SELECTED_OPTION);
+                        };
                     }
                 }
 

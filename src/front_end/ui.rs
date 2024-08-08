@@ -7,7 +7,11 @@ use sdl2::rect::Rect;
 use sdl2::render::{Texture, TextureCreator};
 use sdl2::video::WindowContext;
 
-use crate::full_stack::sdl_events::INPUT_TEXT;
+use crate::
+{
+    INPUT_TEXT,
+    MEDIA_OPTIONS,
+};
 
 
 
@@ -18,7 +22,9 @@ const DEFAULT_FONT_PATH: &str = "fonts/JetBrainsMonoNLNerdFontMono-Bold.ttf";
 const DEFAULT_FONT_COLOR: Color = Color::RGB(255, 255, 255);
 const DEFAULT_FONT_SIZE: u16 = 20;
 
-const INPUT_TEXT_FONT_POSITION: [i32; 2] = [200, 200];
+const TEXT_PADDING: i32 = 10;
+const MEDIA_OPTIONS_FONT_POSITION: [i32; 2] = [100, 200];
+const INPUT_TEXT_FONT_POSITION: [i32; 2] = [100, 100];
 
 
 
@@ -63,13 +69,24 @@ pub fn fonts(texture_creator: &TextureCreator<WindowContext>) -> (Vec<Texture>, 
     {
         input_text.push_str("is empty")
     }
-    println!("\n ======================== \n input text = {} \n ======================== \n", input_text);
-
 
     let (input_text_image, input_text_rect) = font_generator(" ", texture_creator, DEFAULT_FONT_SIZE, input_text, INPUT_TEXT_FONT_POSITION[0], INPUT_TEXT_FONT_POSITION[1]);
+    let mut text_vector = vec![input_text_image];
+    let mut rect_vector = vec![input_text_rect];
+    
+    unsafe
+    {   
+        if !MEDIA_OPTIONS.is_empty() 
+        {
+            for index in 0..(MEDIA_OPTIONS.len() - 1)
+            {
+                let (medias_options_image, medias_options_rect) = font_generator(" ", texture_creator, DEFAULT_FONT_SIZE, MEDIA_OPTIONS[index].clone(), MEDIA_OPTIONS_FONT_POSITION[0], MEDIA_OPTIONS_FONT_POSITION[1] + (TEXT_PADDING * index as i32));
+                text_vector.push(medias_options_image);
+                rect_vector.push(medias_options_rect);
+            }
+        }
+    }
 
-    let text_vector = vec![input_text_image];
-    let rect_vector = vec![input_text_rect];
 
     (text_vector, rect_vector)
 }

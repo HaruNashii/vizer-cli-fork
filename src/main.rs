@@ -10,7 +10,7 @@ use crate::back_end::
 {
     play_video::play_video,
     is_offline::is_offline,
-    media::search_media,
+    media::{search_media, select_media},
     get_video_url::get_url,
     start_driver::start_drivers,
     season::select_season,
@@ -44,6 +44,23 @@ mod full_stack;
 static TRANSLATION: OnceLock<Translations> = OnceLock::new();
 static USE_MPV: OnceLock<bool> = OnceLock::new();
 static USE_GECKODRIVER: OnceLock<bool> = OnceLock::new();
+
+
+// GLOBAL STRINGS USED BY THE FRONT-END
+pub static mut INPUT_TEXT: String = String::new();
+pub static mut SELECTED_OPTION: usize = 1;
+
+pub static mut MEDIA_OPTIONS: Vec<String> = Vec::new();
+pub static mut MEDIA_SELECTED: String = String::new();
+
+pub static mut SEASON_OPTIONS: Vec<String> = Vec::new();
+pub static mut SEASON_SELECTED: String = String::new();
+
+pub static mut EPISODE_OPTIONS: Vec<String> = Vec::new();
+pub static mut EPISODE_SELECTED: String = String::new();
+
+pub static mut EPISODE_LANG_OPTIONS: Vec<String> = Vec::new();
+pub static mut EPISODE_LANG_SELECTED: String = String::new();
 
 
 
@@ -86,7 +103,6 @@ async fn main()
             
 
 
-                println!("RENDERING......");
                 //===============================================================================================================//
                 //------------------------------------------------RENDER THE SCENE-----------------------------------------------//
                 //===============================================================================================================//
@@ -112,21 +128,30 @@ async fn main()
             //------------------------------------------------SEARCH FOR MEDIA-----------------------------------------------//
             //===============================================================================================================//
             let medias = search_media(&language, &mut event_pump).await;
+            
 
+
+            //===============================================================================================================//
+            //------------------------------------------------SELECT THE MEDIA----------------------------------------------//
+            //===============================================================================================================//
+            let media_selected = select_media(&language, medias, &mut event_pump).await;
+            
 
 
             //===============================================================================================================//
             //-----------------------------------------------------SETUP DRIVER----------------------------------------------//
             //===============================================================================================================//
-            let url = format!("https://vizer.in/{}", &medias[0].url);
+            let url = format!("https://vizer.in/{}", media_selected.url);
             driver.goto(&url).await.unwrap();
-            if medias[0].url.contains("serie/") 
+            if media_selected.url.contains("serie/") 
             {
+
+
+
                 //===============================================================================================================//
                 //------------------------------------------------SELECT THE SEASON----------------------------------------------//
                 //===============================================================================================================//
                 select_season(language, &driver, &mut event_pump).await;
-            
                 
                    
                 //===============================================================================================================//
