@@ -70,7 +70,6 @@ pub async fn select_episode(language: &Translations, driver: &Client, event_pump
         let episodes = parse_episodes(&driver).await;
         let episode_opts: Vec<&str> = episodes.iter().map(|s| s.text.as_str()).collect();
         let episode_selected = choose(episode_opts.len(), event_pump);
-        println!("\n number of episodes = {}, \n episode selected = {} \n", episode_opts.len(), episode_opts[episode_selected].to_string());
         episodes[episode_selected].clone().click_episode(&driver, language.click_episode_err).await;
 }
 

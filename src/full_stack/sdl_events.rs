@@ -6,18 +6,17 @@ use std::process::exit;
 
 
 
-pub fn search(event_pump: &mut sdl2::EventPump) -> String 
+pub static mut INPUT_TEXT: String = String::new();
+
+
+
+
+
+pub fn search(event_pump: &mut sdl2::EventPump) -> String
 {   
-    let mut input_text = String::new();
-
-
     loop 
     {
-        print!("\x1B[2J\x1B[1;1H");
-        println!("{}", input_text);
-
-
-        for event in event_pump.poll_iter() 
+        for event in event_pump.poll_iter()
         {
             match event 
             {
@@ -26,14 +25,18 @@ pub fn search(event_pump: &mut sdl2::EventPump) -> String
                 //===============================================================================================================//
                 Event::TextInput{text, .. } =>
                 {
-                    input_text.push_str(&text);
+                    unsafe{INPUT_TEXT.push_str(&text)};
                 }
 
                 
                |Event::KeyDown{keycode: Some(Keycode::Backspace), .. } =>
                 {
-                    if !input_text.is_empty() {
-                        input_text.pop();
+                    unsafe 
+                    {
+                        if !INPUT_TEXT.is_empty() 
+                        {
+                            INPUT_TEXT.pop();
+                        }
                     }
                 }
 
@@ -42,13 +45,13 @@ pub fn search(event_pump: &mut sdl2::EventPump) -> String
                {
 
 
-                    if input_text.len() < 4 
+                    if unsafe{INPUT_TEXT.len()} < 4
                     {
                         println!("not enough letters, please write more than 4 letters");
-                    }
+                    } 
                     else 
-                    {
-                        return input_text;
+                    {   
+                        return unsafe{INPUT_TEXT.clone()};
                     }
                }
                 
@@ -68,8 +71,7 @@ pub fn choose(amount_limit: usize, event_pump: &mut sdl2::EventPump) -> usize
 
     loop 
     {
-        print!("\x1B[2J\x1B[1;1H");
-        println!("\n amount of choices = {}, \n selected = {} \n", amount_limit, selected);
+        println!("\n ========================== \n amount of choices = {},\n ========================== \n  selected = {} \n ========================== \n", amount_limit, selected + 1);
      
 
         for event in event_pump.poll_iter() 
@@ -108,22 +110,27 @@ pub fn choose(amount_limit: usize, event_pump: &mut sdl2::EventPump) -> usize
 
 
 
-pub fn quit(event_pump: &mut sdl2::EventPump) 
+pub fn quit(event_pump: &mut sdl2::EventPump)
 {
-    for event in event_pump.poll_iter() 
+    loop 
     {
-        match event 
+        for event in event_pump.poll_iter()
         {
-            //===============================================================================================================//
-            //------------------------------------QUIT EVENT & QUIT KEYCHECKER (KEYBOARD)------------------------------------//
-            //===============================================================================================================//
-            sdl2::event::Event::Quit { .. } | sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Escape), .. } => 
+            match event 
             {
-                exit(0);
+                //===============================================================================================================//
+                //------------------------------------QUIT EVENT & QUIT KEYCHECKER (KEYBOARD)------------------------------------//
+                //===============================================================================================================//
+                Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => 
+                {
+                    print!("\x1B[2J\x1B[1;1H");
+                    println!("bye bye :3");
+                    exit(0);
+                }
+
+
+                _ => {}
             }
-
-
-            _ => {}
         }
     }
 }

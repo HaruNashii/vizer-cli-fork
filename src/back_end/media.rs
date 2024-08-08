@@ -35,7 +35,7 @@ impl fmt::Display for Media
 
 
  
-pub async fn get_medias(media_name: &str) -> Vec<Media> 
+pub async fn get_medias(media_name: String) -> Vec<Media> 
 {
     let language = TRANSLATION.get().unwrap();
 
@@ -75,8 +75,8 @@ pub async fn get_medias(media_name: &str) -> Vec<Media>
 
 pub async fn search_media(language: &Translations, event_pump: &mut sdl2::EventPump) -> Vec<Media>
 {
-    let media_name = search(event_pump);
-    let medias = get_medias(&media_name).await;
+    let medias_searched = search(event_pump);
+    let medias = get_medias(medias_searched).await;
     if medias.is_empty() 
     {
         panic!("{}", language.media_name_is_empty_exit_text); 
