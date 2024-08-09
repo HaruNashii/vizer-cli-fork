@@ -26,7 +26,7 @@ fn open_vlc(video_url: &str)
 {
     let language = TRANSLATION.get().unwrap();
 
-    println!("{}", language.players_start_misc_text);
+    //println!("{}", language.players_start_misc_text);
     let output = Command::new("vlc").args(["--fullscreen", "--play-and-exit", video_url]).spawn();
 
     match output 
@@ -64,7 +64,7 @@ fn open_vlc(video_url: &str)
 fn open_mpv(video_url: &str) {
     let language = TRANSLATION.get().unwrap();
 
-    println!("{}", language.players_start_misc_text);
+    //println!("{}", language.players_start_misc_text);
     let output = Command::new("mpv").args(["--fs", "--really-quiet", video_url]).spawn();
 
     match output 

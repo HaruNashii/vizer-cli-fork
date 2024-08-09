@@ -5,7 +5,6 @@ use sdl2::video::{Window, WindowContext};
 
 
 
-
 //====================================//
 //===============(WINDOW)=============//
 //====================================//
@@ -45,10 +44,15 @@ pub fn render_scene(text_vector: Vec<Texture>, rect_vector: Vec<Rect>, canvas: &
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
-    canvas.set_draw_color(Color::RGB(255, 255, 255));
-    canvas.fill_rect(Rect::new(400, 400, 200, 200)).unwrap();
-
-    canvas.copy(&text_vector[0], None, rect_vector[0]).unwrap();
+    if !rect_vector.is_empty()
+    {
+        let mut index = 0;
+        for rect in rect_vector
+        {
+            canvas.copy(&text_vector[index], None, rect).unwrap();
+            index += 1;
+        };
+    };
 
     canvas.present();
 }

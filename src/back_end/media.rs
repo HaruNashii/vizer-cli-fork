@@ -11,10 +11,13 @@ use crate::full_stack::
 use crate::
 {
     TRANSLATION,
+};
+
+use crate::front_end::ui::
+{
     MEDIA_OPTIONS,
     MEDIA_SELECTED,
 };
-
 
 #[derive(Clone)]
 pub struct Media 
@@ -81,7 +84,7 @@ pub async fn get_medias(media_name: String) -> Vec<Media>
 
 pub async fn search_media(language: &Translations, event_pump: &mut sdl2::EventPump) -> Vec<Media>
 {
-    println!("{}", language.preparing_misc_text);
+    //println!("{}", language.preparing_misc_text);
 
     let medias_searched = search(event_pump);
     let medias = get_medias(medias_searched).await;
@@ -96,23 +99,23 @@ pub async fn search_media(language: &Translations, event_pump: &mut sdl2::EventP
 
 
 
-pub async fn select_media(language: &Translations, medias: Vec<Media>, event_pump: &mut sdl2::EventPump) -> Media {
+pub async fn select_media(medias: Vec<Media>, event_pump: &mut sdl2::EventPump) -> Media {
     unsafe
     {
         for media in &medias 
         {
                 MEDIA_OPTIONS.push(media.title.clone());
         };
-        println!("\n =========# ALL MEDIAS #============== \n {:?} \n =============================== \n", MEDIA_OPTIONS);
+        //println!("\n =========# ALL MEDIAS #============== \n {:?} \n =============================== \n", MEDIA_OPTIONS);
     }
 
 
-    println!("{}", language.select_media_misc_text);
+    //println!("{}", language.select_media_misc_text);
     let choosed_media = choose(medias.len(), event_pump);
     unsafe 
     {
         MEDIA_SELECTED = medias[choosed_media].title.clone();
-        println!("\n =========# SELECTED MEDIA #============== \n {} \n =============================== \n", MEDIA_SELECTED);
+        //println!("\n =========# SELECTED MEDIA #============== \n {} \n =============================== \n", MEDIA_SELECTED);
     };
 
     medias[choosed_media.clone()].clone()

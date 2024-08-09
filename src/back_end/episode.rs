@@ -8,12 +8,11 @@ use crate::full_stack::
     language::Translations,
 };
 
-use crate::
+use crate::front_end::ui::
 {
+    EPISODE_LANG_OPTIONS,
     EPISODE_OPTIONS,
     EPISODE_SELECTED,
-    EPISODE_LANG_OPTIONS,
-    EPISODE_LANG_SELECTED,
 };
 
 
@@ -39,9 +38,9 @@ impl Episode
 
 
 
-pub async fn parse_episodes(language: &Translations, driver: &Client) -> Vec<Episode> 
+pub async fn parse_episodes(driver: &Client) -> Vec<Episode> 
 {
-    println!("{}", language.getting_episodes_misc_text);
+    //println!("{}", language.getting_episodes_misc_text);
 
     let mut episodes = Vec::new();
     let mut list_of_episodes_text = Vec::new();
@@ -82,13 +81,13 @@ pub async fn parse_episodes(language: &Translations, driver: &Client) -> Vec<Epi
 
 pub async fn select_episode(language: &Translations, driver: &Client, event_pump: &mut sdl2::EventPump) 
 {
-        println!("{}", language.select_episode_misc_text);
-        let episodes = parse_episodes(language, &driver).await;
+        //println!("{}", language.select_episode_misc_text);
+        let episodes = parse_episodes(&driver).await;
         let episode_opts: Vec<String> = episodes.iter().map(|s| s.text.to_string()).collect();
         unsafe 
         {
             EPISODE_OPTIONS = episode_opts.clone();
-            println!("\n =========# ALL EPISODES #============== \n {:?} \n =============================== \n", EPISODE_OPTIONS);
+            //println!("\n =========# ALL EPISODES #============== \n {:?} \n =============================== \n", EPISODE_OPTIONS);
         };
 
 
@@ -97,7 +96,7 @@ pub async fn select_episode(language: &Translations, driver: &Client, event_pump
         unsafe 
         {
             EPISODE_SELECTED = episode_opts[episode_selected].clone();
-            println!("\n =========# EPISODE SELECTED #============== \n {} \n =============================== \n", EPISODE_SELECTED);
+            //println!("\n =========# EPISODE SELECTED #============== \n {} \n =============================== \n", EPISODE_SELECTED);
         };
 }
 
@@ -105,7 +104,7 @@ pub async fn select_episode(language: &Translations, driver: &Client, event_pump
 
 pub async fn select_episode_language(language: &Translations, driver: &Client, event_pump: &mut sdl2::EventPump)
 {
-    println!("{}", language.getting_language_misc_text);
+    //println!("{}", language.getting_language_misc_text);
     let mut lang_selected = 0;
     driver.wait().for_element(Locator::Css("div[data-audio]")).await.unwrap();
 
@@ -116,17 +115,15 @@ pub async fn select_episode_language(language: &Translations, driver: &Client, e
         let opt = lang.attr("data-audio").await.expect(language.language_option_expect);
         langs_opts.push(opt.unwrap());
     }
-    
+
     unsafe 
     {
         EPISODE_LANG_OPTIONS = langs_opts.clone();
-        println!("\n =========# ALL LANGUAGES OPTIONS #============== \n {:?} \n =============================== \n", EPISODE_LANG_OPTIONS);
-    };
-
-
+    }
+    
     let lang_opt = if langs_opts.len() == 2 
     {
-        println!("{}", language.select_lang_misc_text);
+        //println!("{}", language.select_lang_misc_text);
         lang_selected = choose(langs_opts.len(), event_pump);
         langs_opts[lang_selected].to_string()
     }
@@ -135,12 +132,6 @@ pub async fn select_episode_language(language: &Translations, driver: &Client, e
         langs_opts[lang_selected].to_string()
     };
     
-    unsafe 
-    {
-        EPISODE_LANG_SELECTED.push_str(&langs_opts[lang_selected]);
-        println!("\n =========# SELECTED LANGUAGE OPTION #============== \n {} \n =============================== \n", EPISODE_LANG_SELECTED);
-    };
-
     for lang in &langs_opts 
     {
         if *lang == lang_opt 
@@ -153,6 +144,4 @@ pub async fn select_episode_language(language: &Translations, driver: &Client, e
     
     let mixdrop_btn = driver.find(Locator::Css("div[data-load-embed-server='mixdrop']")).await.unwrap();
     click_element(&driver, mixdrop_btn, language.language_option_expect).await;
-    
-
 }

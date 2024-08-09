@@ -1,8 +1,9 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::process::exit;
+use std::time::Duration;
 
-use crate::
+use crate::front_end::ui::
 {
     INPUT_TEXT,
     SELECTED_OPTION,
@@ -16,6 +17,9 @@ pub fn search(event_pump: &mut sdl2::EventPump) -> String
 {   
     loop 
     {
+        std::thread::sleep(Duration::from_millis(32));
+        unsafe{ if INPUT_TEXT.is_empty() { INPUT_TEXT.push(' '); }; };
+
         for event in event_pump.poll_iter()
         {
             match event 
@@ -66,22 +70,14 @@ pub fn search(event_pump: &mut sdl2::EventPump) -> String
 
 pub fn choose(mut amount_limit: usize, event_pump: &mut sdl2::EventPump) -> usize 
 {
-    if !amount_limit >= 1
-    {
-        amount_limit -= 1;
-    };
+    if !amount_limit >= 1 { amount_limit -= 1;};
     let mut selected: usize = 0;
-    unsafe 
-    { 
-        SELECTED_OPTION = 1;
-        println!("\n =========# SELECT OPTION #============== \n {} \n =============================== \n", SELECTED_OPTION);
-    };
+    unsafe { SELECTED_OPTION = 1; };
+    //println!("\n =========# SELECT OPTION #============== \n {} \n =============================== \n", SELECTED_OPTION);
  
     loop 
     {
-        //println!("\n ========================== \n amount of choices = {},\n ========================== \n  selected = {} \n ========================== \n", amount_limit, selected + 1);
-     
-
+        std::thread::sleep(Duration::from_millis(32));
         for event in event_pump.poll_iter() 
         {
             match event 
@@ -94,7 +90,7 @@ pub fn choose(mut amount_limit: usize, event_pump: &mut sdl2::EventPump) -> usiz
                         unsafe 
                         {
                             SELECTED_OPTION += 1;
-                            println!("\n =========# SELECT OPTION #============== \n {} \n =============================== \n", SELECTED_OPTION);
+                            //println!("\n =========# SELECT OPTION #============== \n {} \n =============================== \n", SELECTED_OPTION);
                         };
                     }
                 }
@@ -108,7 +104,7 @@ pub fn choose(mut amount_limit: usize, event_pump: &mut sdl2::EventPump) -> usiz
                         unsafe 
                         {
                             SELECTED_OPTION -= 1;
-                            println!("\n =========# SELECT OPTION #============== \n {} \n =============================== \n", SELECTED_OPTION);
+                            //println!("\n =========# SELECT OPTION #============== \n {} \n =============================== \n", SELECTED_OPTION);
                         };
                     }
                 }
